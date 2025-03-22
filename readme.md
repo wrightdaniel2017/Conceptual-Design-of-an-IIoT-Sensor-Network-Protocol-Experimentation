@@ -1,14 +1,17 @@
-# IoT_L4: Industrial IoT Sensor Data and Forecasting
+# IoT: Industrial IoT Sensor Data and Simulation
 
-This repository demonstrates an end-to-end workflow for simulating sensor data (via multiple protocols), visualizing the data, and running a forecasting pipeline using TimeGPT (Nixtla) and optional VAE-based data augmentation.
+This repository demonstrates an end-to-end workflow for simulating sensor data via multiple protocols (MQTT, CoAP, and OPC UA) and visualizing the data in real-time. The project provides a robust framework for IoT device simulation and monitoring.
 
 ## 📋 Overview
 
 The project includes:
-- Sensor simulations for MQTT, CoAP, and OPC UA
-- Data visualization scripts to understand sensor readings
-- Forecasting pipeline (data preparation, feature engineering, model training, evaluation, cross-validation)
-- Optional VAE-based generative modeling to augment the dataset
+- Sensor simulations for three major IoT protocols:
+  - MQTT (Message Queuing Telemetry Transport)
+  - CoAP (Constrained Application Protocol)
+  - OPC UA (OPC Unified Architecture)
+- Built-in MQTT broker for local testing
+- Data visualization tools to generate plots of sensor readings
+- Multi-process orchestration to run all components simultaneously
 
 ## 📑 Table of Contents
 
@@ -30,7 +33,12 @@ A simplified view of the folder structure:
 ```
 IoT_L4/
 │ 
-├── paho.mqtt.python/     # (Optional) Contains MQTT client libraries or references
+├── paho.mqtt.python/     # Contains MQTT client libraries or references
+├── src/                  # Source code folder
+│   ├── coap_sensor_simulation.py
+│   ├── data_visualization.py
+│   ├── mqtt_sensor_simulation.py
+│   └── opcua_sensor_simulation.py
 ├── visualizations/       # Images and demonstration video
 │   ├── coap_visualization.png
 │   ├── mqtt_visualization.png
@@ -38,43 +46,37 @@ IoT_L4/
 │   └── visualization_demo.mp4
 │ 
 ├── app.log               # Log file (generated after running app.py)
-├── app.py                # Main entry point for the forecasting pipeline
+├── app.py                # Main entry point for running all simulations
+├── broker.py             # Simple MQTT broker implementation
 ├── coap_sensor_simulation.py    # Simulates CoAP sensor data
-├── data_visualization.py        # General data plotting/visualization script
-├── file_structure.txt    # Text file describing the directory structure
+├── data_visualization.py        # Generates visualizations and runs simulations
 ├── mqtt_sensor_simulation.py    # Simulates MQTT sensor data
 ├── opcua_sensor_simulation.py   # Simulates OPC UA sensor data
-├── requirements.txt      # Project dependencies
-└── src/                  # Source code folder
-    ├── cross_validation.py
-    ├── data_preparation.py
-    ├── evaluation.py
-    ├── feature_engineering.py
-    ├── generative_model.py
-    ├── model_training.py
-    └── ...
+├── readme.md             # Project documentation
+└── requirements.txt      # Project dependencies
 ```
 
 ## ✨ Features
 
 ### Sensor Protocol Simulations
-- Scripts to simulate data publishing via MQTT, CoAP, or OPC UA.
+- **MQTT**: Standard lightweight messaging protocol for IoT, simulating temperature and humidity readings
+- **CoAP**: Lightweight HTTP-like protocol optimized for constrained environments
+- **OPC UA**: Industrial automation communication protocol with advanced data modeling
 
-### Data Collection & Visualization
-- Tools to plot raw sensor data, highlighting how the data changes over time.
+### Built-in MQTT Broker
+- Simple MQTT broker implementation using hbmqtt
+- Automatic broker availability detection before starting simulations
 
-### Forecasting Pipeline
-- **Data Preparation**: Resampling, cleaning, handling missing values
-- **Feature Engineering**: Rolling means, time-based features
-- **Model Training** using Nixtla's TimeGPT
-- **Evaluation**: MAE, MSE, residual plots, error distributions
-- **Rolling-Origin Cross-Validation** for robust performance metrics
+### Data Visualization
+- Automatic generation of visualization plots for each protocol
+- Real-time data monitoring capabilities
+- Sample visualization files created on startup
 
-### Generative Modeling (Optional)
-- Variational Autoencoder (VAE) to create synthetic sensor data and augment the dataset for improved forecasting.
-
-### Visual Reports
-- Automatic generation of plots (actual vs. forecast, residuals, rolling statistics, etc.)
+### Process Management
+- Multi-process architecture with robust error handling
+- Automatic dependency installation
+- Daemon threads for output logging
+- Graceful shutdown of all processes
 
 ## 🚀 Installation & Setup
 
@@ -107,97 +109,108 @@ IoT_L4/
 
 ## 🔧 Usage
 
-Below is a high-level workflow. Adjust paths and flags as needed:
+### 1. Setup Environment
 
-### 1. Simulate Sensor Data
-
-You can run any of the sensor simulation scripts to generate or publish data:
+First, set up your Python environment and install dependencies:
 
 ```bash
-# CoAP sensor simulation
-python coap_sensor_simulation.py
+# Create and activate a virtual environment (recommended)
+python -m venv .venv
+source .venv/bin/activate  # On Linux/macOS
+# OR
+.venv\Scripts\activate     # On Windows
 
-# MQTT sensor simulation
-python mqtt_sensor_simulation.py
-
-# OPC UA sensor simulation
-python opcua_sensor_simulation.py
+# Install dependencies (if not using app.py's auto-installation)
+pip install -r requirements.txt
 ```
 
-Each script may output data to a file, console, or a local broker/server, depending on your configuration.
+### 2. Start the MQTT Broker
 
-### 2. Visualize Sensor Data
-
-To quickly plot or analyze the generated sensor data (for example, saved in a CSV or in-memory), run:
+Before running the simulations, start the MQTT broker:
 
 ```bash
-python data_visualization.py
+python broker.py
 ```
 
-This script may produce plots like real-time line charts or static graphs saved to disk (depending on your configuration).
+This will start a MQTT broker on localhost:1883.
 
-### 3. Run the Forecasting Pipeline
+### 3. Run the Application
 
-The main entry point for training and forecasting is `app.py`. It includes:
-- Data loading/preprocessing
-- Feature engineering
-- Model training (TimeGPT)
-- Evaluation & cross-validation
-- (Optional) VAE-based data augmentation
-
-Run the pipeline with:
+You can start all simulation components at once using the main application script:
 
 ```bash
 python app.py
 ```
 
-**Optional Flags**:
-- `--augment`: Enables the VAE-based augmentation step.
-- `--data`: Override the default data path if needed.
-- `--vae_epochs` and `--vae_batch_size`: Control training parameters for the VAE.
+This will:
+1. Verify all dependencies are installed
+2. Check if the MQTT broker is running
+3. Start all sensor simulations (MQTT, CoAP, OPC UA)
+4. Generate visualization files
+5. Monitor and log all processes
 
-Example:
+### 4. Run Individual Components (Optional)
+
+Alternatively, you can run each component separately:
+
 ```bash
-python app.py --augment --vae_epochs 15 --vae_batch_size 64
+# Start MQTT sensor simulation
+python mqtt_sensor_simulation.py
+
+# Start CoAP server
+python coap_sensor_simulation.py
+
+# Start OPC UA server
+python opcua_sensor_simulation.py
+
+# Generate visualizations only
+python data_visualization.py
 ```
+
+### 5. View the Generated Visualizations
+
+After running the application, check the `visualizations/` directory to see the generated plots:
+- `mqtt_visualization.png`: MQTT sensor data plot
+- `coap_visualization.png`: CoAP sensor data plot
+- `opcua_visualization.png`: OPC UA sensor data plot
+- `visualization_demo.mp4`: Animated visualization (if FFmpeg is available)
 
 ## 📜 Scripts Overview
 
 ### `app.py`
-- Orchestrates the entire pipeline.
-- Calls data preparation, feature engineering, model training, evaluation, and cross-validation.
-- Handles optional VAE-based augmentation.
+- Main entry point for the application
+- Orchestrates all simulation components
+- Ensures dependencies are installed
+- Verifies MQTT broker availability
+- Manages process lifecycle and error handling
 
-### `coap_sensor_simulation.py`, `mqtt_sensor_simulation.py`, `opcua_sensor_simulation.py`
-- Generate or publish sensor data using the respective protocol.
-- May require additional configuration (e.g., specifying broker addresses, ports, etc.).
+### `broker.py`
+- Implements a simple MQTT broker using hbmqtt
+- Listens on 127.0.0.1:1883
+- Configured to allow anonymous connections
+
+### `mqtt_sensor_simulation.py`
+- Simulates an MQTT sensor publishing temperature and humidity data
+- Connects to localhost:1883
+- Publishes to "sensor/data" topic with JSON payload
+- Updates values every second
+
+### `coap_sensor_simulation.py`
+- Implements a CoAP server on port 5683
+- Creates a resource at "/sensor" endpoint
+- Responds to GET requests with temperature and humidity data in JSON format
+
+### `opcua_sensor_simulation.py`
+- Sets up an OPC UA server on port 4840
+- Creates variables for temperature and humidity
+- Updates values approximately every second
+- Makes variables writable for client interaction
 
 ### `data_visualization.py`
-- Plots the sensor data (e.g., line charts, scatter plots).
-- Helps you quickly see how data changes over time.
-
-### `requirements.txt`
-- Lists Python dependencies (e.g., paho-mqtt, nixtla, matplotlib, pandas, tensorflow, etc.).
-
-### `src/data_preparation.py`
-- Loads and preprocesses the sensor data (resampling, handling missing values, etc.).
-
-### `src/feature_engineering.py`
-- Adds new features (e.g., rolling means, time-based features like hour of the day).
-
-### `src/model_training.py`
-- Trains a forecasting model with Nixtla's TimeGPT, including exogenous features.
-
-### `src/evaluation.py`
-- Evaluates forecast performance (MAE, MSE).
-- Handles custom logic for retrieving forecast columns.
-
-### `src/cross_validation.py`
-- Performs rolling-origin cross-validation for time-series data.
-- Splits data into multiple train/test folds over time.
-
-### `src/generative_model.py`
-- Contains the VAE (Variational Autoencoder) logic for generating synthetic sensor data.
+- Creates visualization plots for all three protocols
+- Generates sample visualizations upon startup
+- Contains duplicate functionality from app.py for standalone operation
+- Creates both static images and a sample animation video
 
 ## 📊 Data Flow & Visualizations
 
@@ -216,42 +229,102 @@ python app.py --augment --vae_epochs 15 --vae_batch_size 64
 
 Generated plots are displayed inline or in a pop-up window (depending on your environment). Example images (`coap_visualization.png`, `mqtt_visualization.png`, `opcua_visualization.png`) and a demo video (`visualization_demo.mp4`) are located in the `visualizations/` folder.
 
-## 🔮 Forecasting Pipeline
+## 🛠️ System Architecture
 
-When you run:
-```bash
-python app.py
-```
+### Communication Flow
 
-The pipeline steps are:
+The IoT_L4 system uses a multi-process architecture where each component runs independently:
 
-1. **Load & Preprocess**: Reads your CSV (e.g., IOT-temp.csv), handles missing data, sets frequency, etc.
-2. **Feature Engineering**: Adds custom features (rolling mean, time-based features).
-3. **Train & Forecast**: Calls Nixtla's TimeGPT to forecast future values.
-4. **Evaluation**: Compares predicted values vs. actual values in the test set.
-5. **Rolling-Origin CV**: Splits your time series multiple times for robust evaluation.
-6. **(Optional) VAE Augmentation**: Trains a VAE on the dataset, generates synthetic data, appends to the original dataset, and re-trains.
+1. **MQTT Flow**:
+   - `broker.py` starts a MQTT broker on localhost:1883
+   - `mqtt_sensor_simulation.py` connects to the broker and publishes temperature and humidity data
+   - Data is published to the "sensor/data" topic in JSON format
 
-### Outputs:
-- **Forecast**: Printed to console and optionally saved as `forecast_output.csv`.
-- **Plots**: Various plots (actual vs. forecast, residuals, distribution, etc.)
-- **Log**: Detailed log written to `app.log`.
+2. **CoAP Flow**:
+   - `coap_sensor_simulation.py` creates a CoAP server on port 5683
+   - The server exposes a "/sensor" resource endpoint
+   - Clients can GET sensor data from this endpoint
 
-## 🧬 Optional: VAE-Based Augmentation
+3. **OPC UA Flow**:
+   - `opcua_sensor_simulation.py` sets up an OPC UA server on port 4840
+   - The server creates "Temperature" and "Humidity" variables
+   - Values are updated regularly and can be read by OPC UA clients
 
-If you enable the `--augment` flag, the pipeline will:
+### Process Management
 
-1. Train a VAE on your existing dataset (based on `vae_epochs` and `vae_batch_size`).
-2. Generate synthetic sensor readings (same distribution as your real data).
-3. Append synthetic data to the real dataset.
-4. Retrain the forecasting model on this augmented dataset.
-5. Evaluate again to see if performance improves.
+The `app.py` script acts as an orchestrator:
+
+1. **Dependency Management**:
+   - Checks for `requirements.txt` and installs required packages
+   - Falls back to a hardcoded list of dependencies if the file is missing
+
+2. **Broker Verification**:
+   - Checks if an MQTT broker is running on localhost:1883
+   - Exits gracefully if no broker is detected
+
+3. **Process Lifecycle**:
+   - Starts all sensor simulations as subprocesses
+   - Creates daemon threads to capture and log their outputs
+   - Monitors process health and handles unexpected terminations
+   - Ensures clean shutdown on keyboard interrupt
+
+### Visualization
+
+The `data_visualization.py` script handles the creation of visual assets:
+
+1. **Static Images**:
+   - Creates simple plots for each protocol (MQTT, CoAP, OPC UA)
+   - Uses matplotlib to generate PNG files
+
+2. **Animation**:
+   - Attempts to create an MP4 animation if FFmpeg is available
+   - Falls back to creating an empty placeholder file if video generation fails
 
 ## 📝 Logging
 
-`app.log`: After each run of `app.py`, a detailed log is appended or created.
+The application uses Python's built-in logging module to track operations:
 
-**Log details**: Each pipeline step, including data loading, model training, evaluation metrics, and cross-validation folds.
+- **Log File**: `app.log` is created/appended with each run
+- **Console Output**: All log messages are also printed to stdout
+- **Log Format**: `%(asctime)s [%(levelname)s] %(message)s`
+- **Log Level**: INFO by default
+
+Each sensor simulation process has its output captured and logged with a prefix indicating the source.
+
+## 🛡️ Error Handling
+
+The system includes several error handling mechanisms:
+
+1. **Dependency Management**:
+   - Graceful handling of missing packages
+   - Detailed error reporting for failed installations
+
+2. **Process Monitoring**:
+   - Detection of unexpectedly terminated processes
+   - Clean shutdown of all processes on error
+
+3. **Network Connectivity**:
+   - Verification of MQTT broker availability
+   - Socket timeout handling
+
+## 🧩 Extending the Project
+
+### Adding New Protocols
+
+To add support for a new IoT protocol:
+
+1. Create a new script (e.g., `new_protocol_simulation.py`)
+2. Implement the sensor data generation logic
+3. Add the script to the `scripts` dictionary in `app.py`
+
+### Customizing Sensor Behavior
+
+Each simulation script can be modified to:
+
+- Change data generation patterns
+- Adjust update frequencies
+- Add more sensor types beyond temperature and humidity
+- Implement error conditions or anomalies
 
 ## 📄 License
 
@@ -261,9 +334,10 @@ If you enable the `--augment` flag, the pipeline will:
 
 ## 📌 Final Notes
 
-- For best performance, ensure you have enough historical data for training and a reasonable forecast horizon.
-- If you see warnings about exogenous features or forecast horizon from Nixtla, you can fine-tune the `hist_exog_list` or reduce the forecast `h`.
-- Customize each sensor simulation script to match your real-world broker configurations or data endpoints.
-- If you have any questions or need further modifications, feel free to reach out!
+- All simulation scripts are designed to run indefinitely until interrupted
+- The MQTT broker must be running before starting the simulations
+- For production use, replace the built-in broker with a robust solution like Mosquitto or HiveMQ
+- The visualization module requires matplotlib and may need FFmpeg for video generation
+- All three protocols (MQTT, CoAP, OPC UA) are standard in IoT applications but serve different use cases
 
-Enjoy exploring your IoT sensor data and building advanced forecasting models!
+Enjoy exploring multi-protocol IoT sensor simulations!
